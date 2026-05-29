@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BillSplitz - Pembagi Tagihan Otomatis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#F7F5F0;--surface:#FFFFFF;--surface2:#F0EDE6;
+    --accent:#2D6A4F;--accent2:#40916C;--accent-light:#D8F3DC;
+    --danger:#E63946;--warning:#F4A261;--info:#457B9D;
+    --text:#1A1A1A;--text2:#555;--text3:#999;
+    --border:#E0DDD6;--radius:14px;--radius-sm:8px;
+    --shadow:0 2px 12px rgba(0,0,0,0.07);
+  }
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg)}
+
+  /* Header */
+  .header{background:var(--accent);padding:20px 20px 28px;position:relative;overflow:hidden}
+  .header::after{content:'';position:absolute;bottom:-20px;left:0;right:0;height:40px;background:var(--bg);border-radius:50% 50% 0 0/40px 40px 0 0}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .logo-icon{width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .logo-text{font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.5px}
+  .logo-sub{font-size:12px;color:rgba(255,255,255,0.7)}
+
+  /* Steps */
+  .steps{display:flex;align-items:center;justify-content:center;padding:24px 20px 12px;gap:0}
+  .step{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+  .step-dot{width:28px;height:28px;border-radius:50%;background:var(--border);color:var(--text3);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .step.active .step-dot{background:var(--accent);color:#fff}
+  .step.done .step-dot{background:var(--accent2);color:#fff}
+  .step-label{font-size:10px;color:var(--text3);text-align:center;font-weight:500}
+  .step.active .step-label{color:var(--accent);font-weight:600}
+  .step-line{height:2px;flex:1;background:var(--border);margin-bottom:14px;transition:.2s}
+  .step-line.done{background:var(--accent2)}
+
+  /* Screens */
+  .screen{display:none;padding:0 16px 100px;animation:fadeIn .2s ease}
+  .screen.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Cards */
+  .card{background:var(--surface);border-radius:var(--radius);padding:18px;margin-bottom:12px;border:1px solid var(--border)}
+  .card-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+
+  /* Inputs */
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px}
+  .field input,.field select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;transition:.15s}
+  .field input:focus,.field select:focus{border-color:var(--accent)}
+  .input-prefix{position:relative}
+  .input-prefix span{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text2);font-weight:600;font-size:14px;pointer-events:none}
+  .input-prefix input{padding-left:36px}
+
+  /* Toggle group */
+  .toggle-group{display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:var(--radius-sm)}
+  .toggle-btn{flex:1;padding:8px;border:none;border-radius:6px;background:transparent;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:.15s}
+  .toggle-btn.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,0.1)}
+
+  /* Buttons */
+  .btn{width:100%;padding:14px;border-radius:var(--radius-sm);border:none;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:active{background:var(--accent2)}
+  .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text2)}
+  .btn-danger{background:#fff;border:1.5px solid var(--danger);color:var(--danger);font-size:12px;padding:7px 12px;width:auto;border-radius:6px}
+  .btn-add{background:var(--accent-light);color:var(--accent);border:1.5px dashed var(--accent2);font-size:13px;padding:10px;border-radius:var(--radius-sm);width:100%;font-family:inherit;font-weight:600;cursor:pointer}
+
+  /* People list */
+  .person-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px}
+  .person-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .person-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+  .person-name-input{flex:1;border:none;border-bottom:1.5px solid var(--border);padding:4px 0;font-size:14px;font-weight:600;font-family:inherit;background:transparent;outline:none;color:var(--text)}
+  .person-name-input:focus{border-color:var(--accent)}
+  .person-items{display:flex;flex-direction:column;gap:6px}
+  .item-row{display:flex;gap:8px;align-items:center}
+  .item-row input{flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:var(--bg);outline:none}
+  .item-row input:focus{border-color:var(--accent)}
+  .item-row input.price{width:100px;flex:none;font-family:'DM Mono',monospace}
+
+  /* Shared items */
+  .shared-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px}
+  .shared-item-top{display:flex;gap:8px;margin-bottom:8px}
+  .shared-who{display:flex;flex-wrap:wrap;gap:6px}
+  .who-chip{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--border);color:var(--text2);cursor:pointer;border:1.5px solid transparent;transition:.15s;user-select:none}
+  .who-chip.selected{background:var(--accent-light);color:var(--accent);border-color:var(--accent2)}
+
+  /* Result */
+  .result-card{background:var(--surface);border-radius:var(--radius);padding:18px;margin-bottom:10px;border-left:4px solid var(--accent)}
+  .result-name{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .result-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .result-rows{font-size:13px;color:var(--text2)}
+  .result-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)}
+  .result-row:last-child{border:none}
+  .result-total{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:2px solid var(--accent-light);font-weight:700;font-size:16px;color:var(--accent)}
+  .result-cash{margin-top:8px;background:var(--accent-light);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--accent);font-weight:600}
+  .grand-total-card{background:var(--accent);color:#fff;border-radius:var(--radius);padding:18px;margin-bottom:12px;text-align:center}
+  .grand-total-card .label{font-size:12px;opacity:.8;margin-bottom:4px}
+  .grand-total-card .amount{font-size:28px;font-weight:700;font-family:'DM Mono',monospace}
+
+  /* Nav */
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:8px;padding:12px 16px 20px}
+  .nav .btn{flex:1}
+
+  /* Toast */
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:#1A1A1A;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:500;transition:.3s;z-index:999;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:var(--accent-light);color:var(--accent);margin-left:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🧾</div>
+      <div>
+        <div class="logo-text">BillSplitz</div>
+        <div class="logo-sub">Pembagi tagihan otomatis</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps" id="stepsBar">
+    <div class="step active" id="s1"><div class="step-dot">1</div><div class="step-label">Info</div></div>
+    <div class="step-line" id="l1"></div>
+    <div class="step" id="s2"><div class="step-dot">2</div><div class="step-label">Pesanan</div></div>
+    <div class="step-line" id="l2"></div>
+    <div class="step" id="s3"><div class="step-dot">3</div><div class="step-label">Bersama</div></div>
+    <div class="step-line" id="l3"></div>
+    <div class="step" id="s4"><div class="step-dot">4</div><div class="step-label">Hasil</div></div>
+  </div>
+
+  <!-- SCREEN 1: Info Tagihan -->
+  <div class="screen active" id="screen1">
+    <div class="card">
+      <div class="card-title">📋 Info Tagihan</div>
+      <div class="field">
+        <label>Nama Sesi (opsional)</label>
+        <input type="text" id="sessionName" placeholder="Cth: Makan Bareng Sabtu">
+      </div>
+      <div class="field">
+        <label>Jumlah Orang</label>
+        <input type="number" id="numPeople" min="2" max="10" value="3">
+      </div>
+      <div class="field">
+        <label>Pajak PPN (%)</label>
+        <input type="number" id="taxRate" min="0" max="30" value="10" step="0.5">
+      </div>
+      <div class="field">
+        <label>Service Charge (%)</label>
+        <input type="number" id="serviceRate" min="0" max="20" value="5" step="0.5">
+      </div>
+      <div class="field">
+        <label>Tip (%)</label>
+        <div class="toggle-group" id="tipGroup">
+          <button class="toggle-btn active" data-val="0">Tidak</button>
+          <button class="toggle-btn" data-val="5">5%</button>
+          <button class="toggle-btn" data-val="10">10%</button>
+          <button class="toggle-btn" data-val="15">15%</button>
+          <button class="toggle-btn" data-val="custom">Kustom</button>
+        </div>
+        <div id="customTipWrap" style="display:none;margin-top:8px">
+          <input type="number" id="customTip" placeholder="Masukkan % tip" min="0" max="100">
+        </div>
+      </div>
+      <div class="field">
+        <label>Metode Bagi Pajak & Service</label>
+        <div class="toggle-group" id="taxMethodGroup">
+          <button class="toggle-btn active" data-val="equal">Rata</button>
+          <button class="toggle-btn" data-val="proportional">Proporsional</button>
+          <button class="toggle-btn" data-val="single">1 Orang</button>
+        </div>
+        <div id="singlePayerWrap" style="display:none;margin-top:8px">
+          <select id="singlePayer"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Pesanan Per Orang -->
+  <div class="screen" id="screen2">
+    <div class="card" style="background:var(--accent-light);border-color:var(--accent2)">
+      <div style="font-size:13px;color:var(--accent);font-weight:600">💡 Masukkan nama & item pesanan masing-masing orang. Klik "+ Item" untuk menambah pesanan.</div>
+    </div>
+    <div id="peopleList"></div>
+  </div>
+
+  <!-- SCREEN 3: Shared Items -->
+  <div class="screen" id="screen3">
+    <div class="card" style="background:var(--accent-light);border-color:var(--accent2)">
+      <div style="font-size:13px;color:var(--accent);font-weight:600">🍕 Item Bersama: Pesanan yang dikonsumsi oleh lebih dari satu orang (pizza, kentang, dll). Harga dibagi merata ke yang terlibat.</div>
+    </div>
+    <div id="sharedList"></div>
+    <button class="btn-add" onclick="addSharedItem()">+ Tambah Item Bersama</button>
+  </div>
+
+  <!-- SCREEN 4: Hasil -->
+  <div class="screen" id="screen4">
+    <div class="grand-total-card" id="grandTotalCard"></div>
+    <div id="resultsList"></div>
+    <button class="btn btn-outline" style="margin-bottom:80px" onclick="resetAll()">🔄 Hitung Ulang</button>
+  </div>
+
+  <div class="nav" id="navBar">
+    <button class="btn btn-outline" id="btnBack" onclick="goBack()" style="display:none">← Kembali</button>
+    <button class="btn btn-primary" id="btnNext" onclick="goNext()">Lanjut →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let state={
+  step:1,numPeople:3,taxRate:10,serviceRate:5,tipRate:0,taxMethod:'equal',singlePayer:0,
+  sessionName:'',people:[],sharedItems:[],customTip:0
+};
+
+function fmt(n){return 'Rp'+Math.round(n).toLocaleString('id-ID')}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// Step navigation
+function setStep(n){
+  state.step=n;
+  for(let i=1;i<=4;i++){
+    const s=document.getElementById('s'+i);
+    s.classList.remove('active','done');
+    if(i<n)s.classList.add('done');
+    else if(i===n)s.classList.add('active');
+    document.getElementById('screen'+i).classList.remove('active');
+    if(i<4){
+      const l=document.getElementById('l'+i);
+      l.classList.toggle('done',i<n);
+    }
+  }
+  document.getElementById('screen'+n).classList.add('active');
+  document.getElementById('btnBack').style.display=n>1?'':'none';
+  document.getElementById('btnNext').textContent=n===4?'':'Lanjut →';
+  if(n===4)document.getElementById('btnNext').style.display='none';
+  else document.getElementById('btnNext').style.display='';
+  window.scrollTo(0,0);
+}
+
+function goNext(){
+  if(state.step===1){
+    state.numPeople=parseInt(document.getElementById('numPeople').value)||2;
+    state.taxRate=parseFloat(document.getElementById('taxRate').value)||0;
+    state.serviceRate=parseFloat(document.getElementById('serviceRate').value)||0;
+    state.sessionName=document.getElementById('sessionName').value;
+    if(state.numPeople<2||state.numPeople>10){showToast('Jumlah orang 2-10 ya!');return;}
+    initPeople();renderPeople();setStep(2);
+  }else if(state.step===2){
+    collectPeople();
+    let ok=true;
+    state.people.forEach((p,i)=>{if(!p.name){showToast('Nama orang ke-'+(i+1)+' belum diisi!');ok=false;}});
+    if(!ok)return;
+    renderShared();setStep(3);
+  }else if(state.step===3){
+    collectShared();renderResults();setStep(4);
+  }
+}
+
+function goBack(){
+  if(state.step>1)setStep(state.step-1);
+}
+
+// Initialize people
+function initPeople(){
+  const names=['Aku','Teman','Kawan'];
+  while(state.people.length<state.numPeople)state.people.push({name:names[state.people.length]||'Orang '+(state.people.length+1),items:[]});
+  state.people=state.people.slice(0,state.numPeople);
+}
+
+// Render people
+function renderPeople(){
+  const el=document.getElementById('peopleList');
+  el.innerHTML='';
+  state.people.forEach((p,pi)=>{
+    const colors=['#2D6A4F','#40916C','#1B4332','#457B9D','#E63946','#F4A261','#6D6875','#B5838D','#E9C46A','#264653'];
+    const color=colors[pi%colors.length];
+    const initials=(p.name||'?').charAt(0).toUpperCase();
+    let itemsHtml=p.items.map((it,ii)=>`
+      <div class="item-row" id="item-${pi}-${ii}">
+        <input placeholder="Nama item" value="${it.name||''}" onchange="state.people[${pi}].items[${ii}].name=this.value">
+        <input class="price" placeholder="Harga" type="number" value="${it.price||''}" onchange="state.people[${pi}].items[${ii}].price=parseFloat(this.value)||0">
+        <button class="btn-danger" onclick="removeItem(${pi},${ii})">✕</button>
+      </div>`).join('');
+    el.innerHTML+=`
+    <div class="person-card">
+      <div class="person-header">
+        <div class="person-avatar" style="background:${color}20;color:${color}">${initials}</div>
+        <input class="person-name-input" value="${p.name}" onchange="state.people[${pi}].name=this.value;this.previousElementSibling&&(this.previousElementSibling.textContent=this.value.charAt(0).toUpperCase())">
+      </div>
+      <div class="person-items" id="items-${pi}">${itemsHtml}</div>
+      <button class="btn-add" style="margin-top:8px;font-size:12px;padding:7px" onclick="addItem(${pi})">+ Item Pesanan</button>
+    </div>`;
+  });
+}
+
+function addItem(pi){
+  state.people[pi].items.push({name:'',price:0});
+  renderPeople();
+  setTimeout(()=>{const rows=document.querySelectorAll(`#items-${pi} .item-row`);const last=rows[rows.length-1];if(last)last.querySelector('input').focus();},50);
+}
+function removeItem(pi,ii){state.people[pi].items.splice(ii,1);renderPeople();}
+
+function collectPeople(){
+  document.querySelectorAll('.person-card').forEach((card,pi)=>{
+    const nameInput=card.querySelector('.person-name-input');
+    if(nameInput)state.people[pi].name=nameInput.value;
+    const itemRows=card.querySelectorAll('.item-row');
+    itemRows.forEach((row,ii)=>{
+      const inputs=row.querySelectorAll('input');
+      if(state.people[pi].items[ii]){
+        state.people[pi].items[ii].name=inputs[0].value;
+        state.people[pi].items[ii].price=parseFloat(inputs[1].value)||0;
+      }
+    });
+  });
+}
+
+// Shared items
+function renderShared(){
+  const el=document.getElementById('sharedList');
+  el.innerHTML='';
+  state.sharedItems.forEach((si,i)=>{
+    const chips=state.people.map((p,pi)=>`<div class="who-chip ${si.who.includes(pi)?'selected':''}" onclick="toggleWho(${i},${pi})">${p.name||'Orang '+(pi+1)}</div>`).join('');
+    el.innerHTML+=`
+    <div class="shared-item">
+      <div class="shared-item-top">
+        <input placeholder="Nama item bersama" value="${si.name||''}" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;outline:none;background:var(--surface)" onchange="state.sharedItems[${i}].name=this.value">
+        <input type="number" placeholder="Harga" value="${si.price||''}" style="width:110px;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-family:'DM Mono',monospace;outline:none;background:var(--surface)" onchange="state.sharedItems[${i}].price=parseFloat(this.value)||0">
+        <button class="btn-danger" onclick="removeShared(${i})">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600">Siapa yang ikut?</div>
+      <div class="shared-who">${chips}</div>
+    </div>`;
+  });
+}
+
+function addSharedItem(){
+  state.sharedItems.push({name:'',price:0,who:state.people.map((_,i)=>i)});
+  renderShared();
+}
+function removeShared(i){state.sharedItems.splice(i,1);renderShared();}
+function toggleWho(si,pi){
+  const idx=state.sharedItems[si].who.indexOf(pi);
+  if(idx>=0)state.sharedItems[si].who.splice(idx,1);
+  else state.sharedItems[si].who.push(pi);
+  renderShared();
+}
+
+function collectShared(){
+  document.querySelectorAll('.shared-item').forEach((card,i)=>{
+    if(state.sharedItems[i]){
+      const inputs=card.querySelectorAll('input');
+      state.sharedItems[i].name=inputs[0].value;
+      state.sharedItems[i].price=parseFloat(inputs[1].value)||0;
+    }
+  });
+}
+
+// Calculate results
+function renderResults(){
+  const subtotals=state.people.map(p=>p.items.reduce((s,it)=>s+(it.price||0),0));
+  // shared items
+  state.sharedItems.forEach(si=>{
+    if(si.who.length>0){
+      const share=si.price/si.who.length;
+      si.who.forEach(pi=>subtotals[pi]+=share);
+    }
+  });
+  const total=subtotals.reduce((s,v)=>s+v,0);
+  const taxAmt=total*(state.taxRate/100);
+  const svcAmt=total*(state.serviceRate/100);
+  const tipAmt=total*(state.tipRate/100);
+  const grandTotal=total+taxAmt+svcAmt+tipAmt;
+
+  // Tax allocation
+  const taxPerPerson=[];
+  const svcPerPerson=[];
+  const tipPerPerson=[];
+
+  if(state.taxMethod==='equal'){
+    state.people.forEach((_,i)=>{
+      taxPerPerson[i]=taxAmt/state.people.length;
+      svcPerPerson[i]=svcAmt/state.people.length;
+      tipPerPerson[i]=tipAmt/state.people.length;
+    });
+  }else if(state.taxMethod==='proportional'){
+    state.people.forEach((_,i)=>{
+      const ratio=total>0?subtotals[i]/total:1/state.people.length;
+      taxPerPerson[i]=taxAmt*ratio;
+      svcPerPerson[i]=svcAmt*ratio;
+      tipPerPerson[i]=tipAmt*ratio;
+    });
+  }else{
+    state.people.forEach((_,i)=>{
+      taxPerPerson[i]=i===state.singlePayer?taxAmt:0;
+      svcPerPerson[i]=i===state.singlePayer?svcAmt:0;
+      tipPerPerson[i]=i===state.singlePayer?tipAmt:0;
+    });
+  }
+
+  const finals=state.people.map((_,i)=>subtotals[i]+taxPerPerson[i]+svcPerPerson[i]+tipPerPerson[i]);
+
+  // Cash reco: suggest bills
+  function suggestBills(amount){
+    const bills=[100000,50000,20000,10000,5000,2000,1000,500,200,100];
+    let rem=Math.round(amount);const res=[];
+    bills.forEach(b=>{while(rem>=b){res.push(b);rem-=b;}});
+    const cnt={};res.forEach(b=>cnt[b]=(cnt[b]||0)+1);
+    return Object.entries(cnt).map(([b,c])=>c>1?`${c}x${fmt(b)}`:`${fmt(b)}`).join(' + ');
+  }
+
+  const name=state.sessionName||'Tagihan Bersama';
+  document.getElementById('grandTotalCard').innerHTML=`
+    <div class="label">${name}</div>
+    <div class="amount">${fmt(grandTotal)}</div>
+    <div style="font-size:12px;opacity:.7;margin-top:6px">${state.numPeople} orang · PPN ${state.taxRate}% · Service ${state.serviceRate}%${state.tipRate>0?' · Tip '+state.tipRate+'%':''}</div>`;
+
+  const methodLabel={equal:'Rata',proportional:'Proporsional',single:'Ditanggung '+state.people[state.singlePayer]?.name}[state.taxMethod];
+  const colors=['#2D6A4F','#40916C','#1B4332','#457B9D','#E63946','#F4A261','#6D6875','#B5838D','#E9C46A','#264653'];
+
+  const el=document.getElementById('resultsList');
+  el.innerHTML='';
+  state.people.forEach((p,i)=>{
+    const color=colors[i%colors.length];
+    const initials=(p.name||'?').charAt(0).toUpperCase();
+    let itemRows=p.items.filter(it=>it.price>0).map(it=>`<div class="result-row"><span>${it.name||'Item'}</span><span>${fmt(it.price)}</span></div>`).join('');
+    // shared contributions
+    state.sharedItems.forEach(si=>{
+      if(si.who.includes(i)&&si.price>0){
+        const share=si.price/si.who.length;
+        itemRows+=`<div class="result-row"><span>${si.name||'Item bersama'} <span class="tag">bersama</span></span><span>${fmt(share)}</span></div>`;
+      }
+    });
+    el.innerHTML+=`
+    <div class="result-card">
+      <div class="result-name">
+        <div class="result-avatar" style="background:${color}">${initials}</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">${p.name}</div>
+          <div style="font-size:12px;color:var(--text2)">Subtotal pesanan: ${fmt(subtotals[i])}</div>
+        </div>
+      </div>
+      <div class="result-rows">
+        ${itemRows||'<div class="result-row" style="color:var(--text3)"><span>Tidak ada pesanan individu</span></div>'}
+        ${taxPerPerson[i]>0?`<div class="result-row"><span>PPN ${state.taxRate}% (${methodLabel})</span><span>${fmt(taxPerPerson[i])}</span></div>`:''}
+        ${svcPerPerson[i]>0?`<div class="result-row"><span>Service ${state.serviceRate}% (${methodLabel})</span><span>${fmt(svcPerPerson[i])}</span></div>`:''}
+        ${tipPerPerson[i]>0?`<div class="result-row"><span>Tip ${state.tipRate}%</span><span>${fmt(tipPerPerson[i])}</span></div>`:''}
+      </div>
+      <div class="result-total"><span>Total Bayar</span><span>${fmt(finals[i])}</span></div>
+      <div class="result-cash">💵 Rekomendasi: ${suggestBills(finals[i])}</div>
+    </div>`;
+  });
+}
+
+function resetAll(){
+  state={step:1,numPeople:3,taxRate:10,serviceRate:5,tipRate:0,taxMethod:'equal',singlePayer:0,sessionName:'',people:[],sharedItems:[],customTip:0};
+  setStep(1);
+}
+
+// Tip toggle
+document.getElementById('tipGroup').addEventListener('click',e=>{
+  const btn=e.target.closest('.toggle-btn');if(!btn)return;
+  document.querySelectorAll('#tipGroup .toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const val=btn.dataset.val;
+  document.getElementById('customTipWrap').style.display=val==='custom'?'block':'none';
+  state.tipRate=val==='custom'?state.customTip:parseFloat(val)||0;
+});
+document.getElementById('customTip').addEventListener('input',function(){
+  state.customTip=parseFloat(this.value)||0;state.tipRate=state.customTip;
+});
+
+// Tax method toggle
+document.getElementById('taxMethodGroup').addEventListener('click',e=>{
+  const btn=e.target.closest('.toggle-btn');if(!btn)return;
+  document.querySelectorAll('#taxMethodGroup .toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.taxMethod=btn.dataset.val;
+  document.getElementById('singlePayerWrap').style.display=state.taxMethod==='single'?'block':'none';
+  if(state.taxMethod==='single'){
+    const sel=document.getElementById('singlePayer');
+    sel.innerHTML=state.people.length?state.people.map((p,i)=>`<option value="${i}">${p.name||'Orang '+(i+1)}</option>`).join('')
+    :'<option>Tentukan di langkah berikutnya</option>';
+  }
+});
+document.getElementById('singlePayer').addEventListener('change',function(){state.singlePayer=parseInt(this.value);});
+</script>
+</body>
+</html>
